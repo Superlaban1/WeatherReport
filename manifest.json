@@ -1,0 +1,19 @@
+{
+    "name": "Vejr lige nu",
+    "short_name": "Vejr",
+    "description": "Lokalt vejr og fem dages vejrudsigt.",
+    "lang": "da",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#f6f9fd",
+    "theme_color": "#eaf4ff",
+    "icons": [
+        {
+            "src": "./assets/img/weather-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ]
+}
