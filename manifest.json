@@ -1,6 +1,6 @@
 {
-    "name": "Vejr lige nu",
-    "short_name": "Vejr",
+    "name": "Weather Report",
+    "short_name": "Forecast",
     "description": "Lokalt vejr og fem dages vejrudsigt.",
     "lang": "da",
     "start_url": "./",

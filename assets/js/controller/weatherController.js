@@ -1,71 +1,71 @@
-export function startWeatherController(model, view) {
+import {
+    renderWeather,
+    selectDate,
+    setLocation,
+    setTab,
+    setupViewEvents,
+    showError,
+    showStatus,
+} from "../view/weatherView.js";
+
+export function startWeatherController(model) {
     let weatherData = null;
 
-    async function loadWeather(location) {
-        view.showStatus("Henter vejrdata …");
+    function loadWeather(location) {
+        showStatus("Henter vejrdata …");
 
-        try {
-            weatherData = await model.getForecast(location.latitude, location.longitude);
-            view.setLocation(location);
-            view.renderWeather(weatherData);
-            view.setTab("today");
-        } catch (error) {
-            view.showError(error.message);
-        }
-    }
-
-    async function searchLocation(name) {
-        view.showStatus(`Søger efter ${name} …`);
-
-        try {
-            const location = await model.findLocation(name);
-            await loadWeather(location);
-        } catch (error) {
-            view.showError(error.message);
-        }
+        model.getForecast(location.latitude, location.longitude)
+            .then(function (data) {
+                weatherData = data;
+                setLocation(location);
+                renderWeather(weatherData);
+                setTab("today");
+            })
+            .catch(function (error) {
+                showError(error.message);
+            });
     }
 
     function selectDay(date) {
-        if (weatherData === null) return;
+        if (weatherData === null) {
+            return;
+        }
 
-        view.selectDate(date, weatherData);
-        view.setTab("forecast");
+        selectDate(date, weatherData);
+        setTab("forecast");
     }
 
     function showToday() {
         if (weatherData !== null) {
-            view.selectDate(weatherData.current.time.slice(0, 10), weatherData);
+            selectDate(weatherData.current.time.slice(0, 10), weatherData);
         }
 
-        view.setTab("today");
+        setTab("today");
     }
 
-    const handlers = {
-        onSearch: searchLocation,
-        onToday: showToday,
-        onForecast: function () {
-            view.setTab("forecast");
-        },
-        onSelectDay: selectDay,
-    };
-    view.bindHandlers(handlers);
+    function showForecast() {
+        setTab("forecast");
+    }
+
+    setupViewEvents(showToday, showForecast, selectDay);
 
     if (!navigator.geolocation) {
-        view.showError("Din browser understøtter ikke lokation. Søg efter en by i stedet.");
+        showError("Din browser understøtter ikke lokation.");
         return;
     }
 
-    view.showStatus("Finder vejret for din lokation …");
+    showStatus("Finder vejret for din lokation …");
     navigator.geolocation.getCurrentPosition(
         function (position) {
-            loadWeather({
+            let location = {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
                 name: "Din lokation",
-            });
+            };
+            loadWeather(location);
         },
         function () {
-            view.showError("Vi kunne ikke hente din lokation. Søg efter en by for at se vejret.");
+            showError("Vi kunne ikke hente din lokation. Kontrollér lokationstilladelsen i browseren.");
         },
     );
 }

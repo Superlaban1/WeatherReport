@@ -1,6 +1,6 @@
 export function weatherIcon(icon) {
-    const element = document.createElement("span");
+    let element = document.createElement("span");
     element.className = "weather-icon";
-    element.textContent = icon;
+    element.innerText = icon;
     return element;
 }

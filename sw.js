@@ -1,7 +1,7 @@
-const CACHE_PREFIX = "weather-report-";
-const STATIC_CACHE = `${CACHE_PREFIX}static-v6`;
-const API_CACHE = `${CACHE_PREFIX}api-v1`;
-const STATIC_FILES = [
+let CACHE_PREFIX = "weather-report-";
+let STATIC_CACHE = CACHE_PREFIX + "static-v8";
+let API_CACHE = CACHE_PREFIX + "api-v1";
+let STATIC_FILES = [
     "./",
     "./index.html",
     "./manifest.json",
@@ -20,63 +20,108 @@ const STATIC_FILES = [
     "./assets/js/components/organisms/viewTabs.js",
     "./assets/js/components/organisms/forecastSection.js",
     "./assets/js/components/organisms/hourlySection.js",
-    "./assets/js/components/organisms/sourceFooter.js",
     "./assets/js/components/templates/weatherApp.js",
     "./assets/img/weather-icon.svg",
 ];
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", function (event) {
     event.waitUntil(
         caches.open(STATIC_CACHE)
-            .then((cache) => cache.addAll(STATIC_FILES))
-            .then(() => self.skipWaiting()),
+            .then(function (cache) {
+                return cache.addAll(STATIC_FILES);
+            })
+            .then(function () {
+                return self.skipWaiting();
+            }),
     );
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", function (event) {
     event.waitUntil(
         caches.keys()
-            .then((keys) => Promise.all(keys
-                .filter((key) => key.startsWith(CACHE_PREFIX) && ![STATIC_CACHE, API_CACHE].includes(key))
-                .map((key) => caches.delete(key))))
-            .then(() => self.clients.claim()),
+            .then(function (cacheNames) {
+                let deletePromises = [];
+                for (let index = 0; index < cacheNames.length; index++) {
+                    let cacheName = cacheNames[index];
+                    let isOldAppCache = cacheName.startsWith(CACHE_PREFIX)
+                        && cacheName !== STATIC_CACHE
+                        && cacheName !== API_CACHE;
+                    if (isOldAppCache) {
+                        deletePromises.push(caches.delete(cacheName));
+                    }
+                }
+                return Promise.all(deletePromises);
+            })
+            .then(function () {
+                return self.clients.claim();
+            }),
     );
 });
 
-self.addEventListener("fetch", (event) => {
-    const { request } = event;
-    if (request.method !== "GET") return;
+self.addEventListener("fetch", function (event) {
+    let request = event.request;
+    if (request.method !== "GET") {
+        return;
+    }
 
-    const url = new URL(request.url);
-    if (url.hostname === "api.open-meteo.com" || url.hostname === "geocoding-api.open-meteo.com") {
+    let url = new URL(request.url);
+    let isWeatherApi = url.hostname === "api.open-meteo.com";
+    if (isWeatherApi) {
         event.respondWith(networkFirst(request));
     } else if (url.origin === self.location.origin) {
         event.respondWith(cacheFirst(request));
     }
 });
 
-async function cacheFirst(request) {
-    const cache = await caches.open(STATIC_CACHE);
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) return cachedResponse;
-
-    const response = await fetch(request);
-    if (response.ok) await cache.put(request, response.clone());
-    return response;
+function cacheFirst(request) {
+    return caches.open(STATIC_CACHE)
+        .then(function (cache) {
+            return cache.match(request)
+                .then(function (cachedResponse) {
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    return fetch(request)
+                        .then(function (response) {
+                            if (response.ok) {
+                                return cache.put(request, response.clone())
+                                    .then(function () {
+                                        return response;
+                                    });
+                            }
+                            return response;
+                        });
+                });
+        });
 }
 
-async function networkFirst(request) {
-    const cache = await caches.open(API_CACHE);
-    try {
-        const response = await fetch(request);
-        if (response.ok) {
-            await cache.put(request, response.clone());
-            return response;
-        }
-        return (await cache.match(request)) || response;
-    } catch (error) {
-        const cachedResponse = await cache.match(request);
-        if (cachedResponse) return cachedResponse;
-        throw error;
-    }
+function networkFirst(request) {
+    return caches.open(API_CACHE)
+        .then(function (cache) {
+            return fetch(request)
+                .then(function (response) {
+                    if (response.ok) {
+                        return cache.put(request, response.clone())
+                            .then(function () {
+                                return response;
+                            });
+                    }
+                    return cache.match(request)
+                        .then(function (cachedResponse) {
+                            if (cachedResponse) {
+                                return cachedResponse;
+                            }
+                            return response;
+                        });
+                })
+                .catch(function (error) {
+                    return cache.match(request)
+                        .then(function (cachedResponse) {
+                            if (cachedResponse) {
+                                return cachedResponse;
+                            }
+                            throw error;
+                        });
+                });
+        });
 }

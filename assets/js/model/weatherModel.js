@@ -1,4 +1,4 @@
-const WEATHER_CODES = {
+let WEATHER_CODES = {
     0: ["Klart", "☀️"],
     1: ["Mest klart", "🌤️"],
     2: ["Delvist skyet", "⛅"],
@@ -29,52 +29,30 @@ const WEATHER_CODES = {
     99: ["Torden og kraftigt hagl", "⛈️"],
 };
 
-const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
-const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
+let FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 
 export function getWeatherInfo(code) {
     return WEATHER_CODES[code] || ["Ukendt vejr", "🌡️"];
 }
 
-export async function getForecast(latitude, longitude) {
-    const params = new URLSearchParams({
-        latitude: String(latitude),
-        longitude: String(longitude),
-        current: "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m",
-        hourly: "temperature_2m,precipitation,rain,snowfall,weather_code,wind_speed_10m,wind_direction_10m",
-        daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_direction_10m_dominant",
-        forecast_days: "5",
-        temperature_unit: "celsius",
-        wind_speed_unit: "kmh",
-        precipitation_unit: "mm",
-        timezone: "auto",
-    });
-    const response = await fetch(`${FORECAST_URL}?${params}`);
-    if (!response.ok) {
-        throw new Error("Vejrdata kunne ikke hentes lige nu.");
-    }
-    return response.json();
-}
+export function getForecast(latitude, longitude) {
+    let forecastUrl = FORECAST_URL;
+    forecastUrl = forecastUrl + "?latitude=" + latitude;
+    forecastUrl = forecastUrl + "&longitude=" + longitude;
+    forecastUrl = forecastUrl + "&current=temperature_2m,precipitation,rain,snowfall,weather_code,wind_speed_10m,wind_direction_10m";
+    forecastUrl = forecastUrl + "&hourly=temperature_2m,precipitation,rain,snowfall,weather_code,wind_speed_10m,wind_direction_10m";
+    forecastUrl = forecastUrl + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_direction_10m_dominant";
+    forecastUrl = forecastUrl + "&forecast_days=5";
+    forecastUrl = forecastUrl + "&temperature_unit=celsius";
+    forecastUrl = forecastUrl + "&wind_speed_unit=kmh";
+    forecastUrl = forecastUrl + "&precipitation_unit=mm";
+    forecastUrl = forecastUrl + "&timezone=auto";
 
-export async function findLocation(name) {
-    const params = new URLSearchParams({
-        name,
-        count: "1",
-        language: "da",
-        format: "json",
-    });
-    const response = await fetch(`${GEOCODING_URL}?${params}`);
-    if (!response.ok) {
-        throw new Error("Byen kunne ikke søges frem lige nu.");
-    }
-    const data = await response.json();
-    if (!data.results?.length) {
-        throw new Error("Vi kunne ikke finde den by. Prøv et andet navn.");
-    }
-    const [location] = data.results;
-    return {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        name: [location.name, location.admin1, location.country].filter(Boolean).join(", "),
-    };
+    return fetch(forecastUrl)
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error("Vejrdata kunne ikke hentes lige nu.");
+            }
+            return response.json();
+        });
 }

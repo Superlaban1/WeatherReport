@@ -5,9 +5,8 @@ En lille, installérbar vejr-app bygget med vanilla JavaScript-moduler og Open-M
 ## Funktioner
 
 - Viser dagens vejr for din nuværende lokation.
-- Søg efter en by, hvis du ikke vil dele din lokation.
 - Se en femdagesprognose og vælg en dag for at få vejret time for time.
-- Viser temperatur, vindstyrke og -retning, vejrtype og nedbør.
+- Viser temperatur, vindstyrke og -retning, vejrtype med ikon og nedbør.
 - Fungerer offline med tidligere hentede vejrdata og cachede app-filer.
 
 ## Kør lokalt
@@ -18,7 +17,7 @@ Appen bruger JavaScript-moduler og service workers, så åbn den via en lokal we
 python -m http.server 8000
 ```
 
-Åbn derefter `http://localhost:8000`. Giv browseren tilladelse til at bruge din lokation, eller søg efter en by. Lokation kræver HTTPS eller localhost.
+Åbn derefter `http://localhost:8000`, og giv browseren tilladelse til at bruge din lokation. Lokation kræver HTTPS eller localhost.
 
 ## GitHub Pages
 
@@ -26,7 +25,7 @@ Appen kan publiceres via **Settings → Pages** i repoet. Vælg en deployment-me
 
 ## Struktur
 
-- `assets/js/model/weatherModel.js` henter vejr- og geokodningsdata fra Open-Meteo.
+- `assets/js/model/weatherModel.js` henter vejrdata fra Open-Meteo.
 - `assets/js/view/weatherView.js` viser data og håndterer visningens knapper.
 - `assets/js/site.js` monterer sidens skabelon og starter MVC-controlleren.
 - `assets/js/components/atoms/` indeholder små dele som HTML-elementer, vejr-ikoner og formatering.
@@ -39,4 +38,4 @@ Appen kan publiceres via **Settings → Pages** i repoet. Vælg en deployment-me
 
 Visningen holder sig til en enkel MVC-opdeling. Komponenterne følger atomic design fra atoms og molecules til organisms og sidens template – uden ekstra framework.
 
-Vejrudsigten bruger Open-Meteos gratis Forecast- og Geocoding-API'er. Ingen API-nøgle er nødvendig.
+Vejrudsigten bruger Open-Meteos gratis Forecast-API. Ingen API-nøgle er nødvendig.
